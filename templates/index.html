@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>FB OTP SENDER</title>
+    <style>
+        body { background: #000; color: #00ff41; font-family: monospace; padding: 15px; }
+        .box { border: 1px solid #00ff41; padding: 15px; border-radius: 10px; box-shadow: 0 0 10px #00ff41; }
+        textarea { width: 93%; background: #111; color: #fff; border: 1px solid #00ff41; padding: 10px; height: 100px; margin-bottom: 10px; border-radius: 5px; }
+        button { width: 100%; padding: 12px; background: #00ff41; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .stats { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; }
+        #logs { height: 250px; overflow-y: auto; background: #050505; padding: 10px; border: 1px solid #333; font-size: 12px; margin-top: 10px; }
+        .live { color: #00ff41; }
+        .die { color: #ff3131; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 align="center">FB OTP SENDER V1</h2>
+        <div class="stats">
+            <span>LIVE: <b id="l">0</b></span>
+            <span>DIE: <b id="d">0</b></span>
+        </div>
+        <textarea id="numList" placeholder="Enter numbers (one per line)"></textarea>
+        <button onclick="start()">START ATTACK</button>
+        <div id="logs">>> System Initialized...<br></div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        async function start() {
+            let list = document.getElementById('numList').value.split('\n');
+            let logBox = document.getElementById('logs');
+            let l_cnt = 0, d_cnt = 0;
+
+            for(let phone of list) {
+                if(!phone.trim()) continue;
+                logBox.innerHTML += `> Checking: ${phone}...<br>`;
+                logBox.scrollTop = logBox.scrollHeight;
+
+                try {
+                    let res = await fetch('/check', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({phone: phone.trim()})
+                    });
+                    let data = await res.json();
+
+                    if(data.status === "LIVE") {
+                        l_cnt++; document.getElementById('l').innerText = l_cnt;
+                        logBox.innerHTML += `<span class="live">> [HIT] ${phone} - ${data.msg}</span><br>`;
+                    } else {
+                        d_cnt++; document.getElementById('d').innerText = d_cnt;
+                        logBox.innerHTML += `<span class="die">> [BAD] ${phone} - ${data.msg}</span><br>`;
+                    }
+                } catch(e) {
+                    logBox.innerHTML += `<span>> Error connecting to server</span><br>`;
+                }
+                await new Promise(r => setTimeout(r, 800)); // সামান্য ডিলে
+            }
+        }
+    </script>
+</body>
+</html>
